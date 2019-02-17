@@ -6,9 +6,10 @@ library(RColorBrewer)
 pokemons <- read.csv('Pokemon.csv', stringsAsFactors = F)
 pokemons$Legendary <- as.integer(as.logical(pokemons$Legendary))
 
+## Custom pallete
+new_pallete <- colorRampPalette(brewer.pal(5, 'OrRd'))
 
-new_pallete <- colorRampPalette(rev(brewer.pal(5, 'OrRd')))
-
+## Modified plot
 ggplot(pokemons, aes(Type.1)) +
   geom_bar(aes(fill=..count..), alpha=0.8) +
   scale_fill_gradientn(colours = new_pallete(100)) +
