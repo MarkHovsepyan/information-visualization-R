@@ -184,7 +184,8 @@ server <- function(input, output, session) {
       filter(games > 40)
     
     p <- ggplot(player_avg, aes(x = ast, y = reb,
-                                text = paste('FG%: ', round((fgm/fga * 100), digits = 2),
+                                text = paste('Player: ', Player,
+                                             '<br>FG%: ', round((fgm/fga * 100), digits = 2),
                                              '<br>Assists: ', round(ast, digits = 2),
                                              '<br>Rebounds: ', round(reb, digits = 2),
                                              '<br>Points: ', round(pts, digits = 2)))) +
