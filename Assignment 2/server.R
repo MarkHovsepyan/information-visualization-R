@@ -98,7 +98,7 @@ server <- function(input, output, session) {
   
   ## team analysis data
   
-  one_team_data <- eventReactive(input$teamSeasonBtnInput, {
+  one_team_data <- eventReactive(input$teamInput1, {
     get_team_games_data(team_season(), input$teamInput1)
     
   })
@@ -110,20 +110,21 @@ server <- function(input, output, session) {
     get_players_by_season_total(as.numeric(input$seasonInput4))
   })
   
-  player_shots <- eventReactive(input$shotChartBtnInput, {
+  player_shots <- eventReactive(input$playerInput3, {
     shots_data <- get_player_shots(get_playerID_from_name(input$playerInput3, player_totals1()),
                                    as.numeric(input$seasonInput4))
   })
+
   
-  player_name <- eventReactive(input$Z, {
+  player_name <- eventReactive(input$playerInput3, {
     input$playerInput3
   })
   
-  player_img <- eventReactive(input$shotChartBtnInput, {
+  player_img3 <- eventReactive(input$playerInput3, {
     get_pic_link(input$playerInput3)
   })
   
-  player_info <- eventReactive(input$shotChartBtnInput, {
+  player_info <- eventReactive(input$playerInput3, {
     player <- get_player_table(input$playerInput3, player_totals1())
     
     age <- get_player_age(player)
@@ -139,6 +140,132 @@ server <- function(input, output, session) {
     court
   })
   
+  shotChart1 <- reactive({
+    
+    shotDataf <- player_shots()
+    
+    p <- ggplot(shotDataf, aes(x = LOC_X, y = LOC_Y)) + 
+      annotation_custom(court_image(), -250, 250, -50, 420) +
+      geom_point(aes(colour = SHOT_ZONE_BASIC, shape = EVENT_TYPE)) +
+      scale_shape_manual(values = c(21, 4)) +
+      xlim(-250, 250) +
+      ylim(-50, 420) +
+      geom_rug(alpha = 0.2) +
+      coord_fixed() +
+      ggtitle('Shot Types') +
+      theme(line = element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            legend.title = element_blank(),
+            plot.title = element_text(size = 15, lineheight = 0.9, face = "bold"),
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"))
+    
+    p
+  })
+  
+  shotChart2 <- reactive({
+    
+    shotDataf <- player_shots()
+    
+    p <- ggplot(shotDataf, aes(x = LOC_X, y = LOC_Y)) + 
+      annotation_custom(court_image(), -250, 250, -52, 418) +
+      geom_point(aes(colour = EVENT_TYPE, alpha = 0.8), size = 3) +
+      scale_color_manual(values = c("#008000", "#FF6347")) +
+      guides(alpha = FALSE, size = FALSE) +
+      xlim(250, -250) +
+      ylim(-52, 418) +
+      geom_rug(alpha = 0.2) +
+      coord_fixed() +
+      ggtitle("Hit and Miss") +
+      theme(line = element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            legend.title = element_blank(),
+            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"),
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"))
+    
+    p
+  })
+  
+  shotChart3 <- reactive({
+    
+    shotDataf <- player_shots()
+    
+    p <- ggplot(shotDataf, aes(x = LOC_X, y = LOC_Y)) + 
+      annotation_custom(court_image(), -250, 250, -52, 418) +
+      stat_binhex(bins = 25, colour = "gray", alpha = 0.7) +
+      scale_fill_gradientn(colours = c("yellow","orange","red")) +
+      guides(alpha = FALSE, size = FALSE) +
+      xlim(250, -250) +
+      ylim(-52, 418) +
+      geom_rug(alpha = 0.2) +
+      coord_fixed() +
+      ggtitle("Shot Density") +
+      theme(line = element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            legend.title = element_blank(),
+            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"),
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"))
+    
+    p
+  })
+  
+  shotChart4 <- reactive({
+    
+    shotDataf <- player_shots()
+    
+    shotDataS <- shotDataf[which(!shotDataf$SHOT_ZONE_BASIC=='Backcourt'), ]
+    shotS <- plyr::ddply(shotDataS, .(SHOT_ZONE_BASIC), summarize, 
+                         SHOTS_ATTEMPTED = length(SHOT_MADE_FLAG),
+                         SHOTS_MADE = sum(as.numeric(as.character(SHOT_MADE_FLAG))),
+                         MLOC_X = mean(LOC_X),
+                         MLOC_Y = mean(LOC_Y))
+    
+    shotS$SHOT_ACCURACY <- (shotS$SHOTS_MADE / shotS$SHOTS_ATTEMPTED)
+    shotS$SHOT_ACCURACY_LAB <- paste(as.character(round(100 * shotS$SHOT_ACCURACY, 1)), "%", sep="")
+    
+    p <- ggplot(shotS, aes(x = MLOC_X, y = MLOC_Y)) + 
+      annotation_custom(court_image(), -250, 250, -52, 418) +
+      geom_point(aes(colour = SHOT_ZONE_BASIC, size = SHOT_ACCURACY, alpha = 0.8), size = 8) +
+      geom_text(aes(colour = SHOT_ZONE_BASIC, label = SHOT_ACCURACY_LAB), vjust = -1.2, size = 5) +
+      guides(alpha = FALSE, size = FALSE) +
+      xlim(250, -250) +
+      ylim(-52, 418) +
+      coord_fixed() +
+      ggtitle("Shot Accuracy") +
+      theme(line = element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            legend.title = element_blank(),
+            legend.text = element_text(size = 12),
+            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"),
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"))
+    
+    p
+  })
+  
+  # Return the requested graph
+  graphInput <- reactive({
+    switch(input$chartTypeInput1,
+           "Shot Types" = shotChart1(),
+           "Hit and Miss" = shotChart2(),
+           "Shot Density" = shotChart3(),
+           "Shot Accuracy" = shotChart4()
+    )
+  })
   
   ### Outputs ###
   
@@ -147,19 +274,30 @@ server <- function(input, output, session) {
   output$win_percentage <- renderPlotly({
     team_season <- team_season()
     team_win <- as.data.frame(table(team_season$team_abbr))
-    
+      
     team_win$win <- team_season %>%
       group_by(team_abbr) %>%
       filter(win == T) %>%
       select(win) %>%
       summarise(cnt = n())
+
+    tn <- as.data.frame(table(team_season$team_name))  
+    tn$win <- team_season %>%
+      group_by(team_name) %>%
+      filter(win == T) %>%
+      select(win) %>%
+      summarise(cnt = n())
     
-    perc <- (team_win$win$cnt / team_win$Freq) * 100
+    tn$Var1 <- reorder(tn$Var1, (tn$win$cnt / tn$Freq) * 100)
     
-    p <- ggplot(team_win, aes(x = reorder(Var1, perc), y = perc, 
-                              text = paste('Team: ', Var1,
+    team_win$perc <- (team_win$win$cnt / team_win$Freq) * 100
+    team_win$Var1 <- reorder(team_win$Var1, team_win$perc)
+    team_win$team_name <- tn$Var1
+    
+    p <- ggplot(team_win, aes(x = Var1, y = perc, 
+                              text = paste('Team: ', team_name,
                                            '<br>Win %:', round(perc, digits = 2)))) +
-      geom_bar(stat = "identity", aes(fill= Var1)) +
+      geom_bar(stat = "identity", aes(fill = Var1)) +
       theme(axis.line = element_blank(),
             axis.text.x = element_blank(),
             axis.ticks = element_blank(),
@@ -167,17 +305,18 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.border = element_blank(),
-            panel.background = element_blank()) +
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent")) +
+      scale_fill_viridis_d(direction = -1) +
       xlab("Teams") +
       ylab("Win Percentage") +
-      scale_colour_brewer() +  
       coord_flip() +
-      ggtitle("Team Performance") +
       geom_text(size = 3, aes(x = Var1, y = perc + 4 , label = round(perc , 1)))
     
-    ggplotly(p, tooltip="text")
+   ggplotly(p, tooltip="text") %>%
+     plotly::config(displaylogo = FALSE, 
+                    modeBarButtonsToRemove = c("lasso2d", "autoScale2d", "hoverCompareCartesian"))
   })
-  
   
   output$player_distribution <- renderPlotly({
     player_avg <- player_season_avg() %>%
@@ -198,14 +337,17 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.border = element_blank(),
-            panel.background = element_blank()) +  
-      ggtitle("Players Performance") + 
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"),
+            legend.background =  element_rect(fill = "transparent")) +
       xlab("Assists Per Game") +
       ylab("Rebounds Per Game") +
       labs(fill = "FG%")
       
     
-    ggplotly(p, tooltip="text")
+    ggplotly(p, tooltip="text") %>%
+      plotly::config(displaylogo = FALSE, 
+                     modeBarButtonsToRemove = c("lasso2d", "autoScale2d", "hoverCompareCartesian"))
     
   })
   
@@ -275,10 +417,14 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.border = element_blank(),
-            panel.background = element_blank()) + 
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"),
+            legend.background =  element_rect(fill = "transparent")) + 
       labs(fill = "Teams")
     
-    ggplotly(p, tooltip="text")
+    ggplotly(p, tooltip="text") %>%
+      plotly::config(displaylogo = FALSE, 
+                     modeBarButtonsToRemove = c("lasso2d", "autoScale2d", "hoverCompareCartesian"))
     
   })
   
@@ -353,10 +499,14 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.border = element_blank(),
-            panel.background = element_blank()) +
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"),
+            legend.background =  element_rect(fill = "transparent")) +
       xlab("Player Stats") + ylab(NULL)
     
-    ggplotly(p, tooltip="text")
+    ggplotly(p, tooltip="text") %>%
+      plotly::config(displaylogo = FALSE, 
+                     modeBarButtonsToRemove = c("lasso2d", "autoScale2d", "hoverCompareCartesian"))
   })
   
   
@@ -368,12 +518,6 @@ server <- function(input, output, session) {
                 choices = get_team_list(team_season()))
   })
   
-  
-  output$teamSeasonBtn <- renderUI({
-    HTML(
-      '<center><button id="teamSeasonBtnInput" class="btn btn-default action-button">Show</button></center>'
-    )
-  })
   
   output$general_teamPlot <- renderPlotly({
     one_team_data <- one_team_data()
@@ -391,11 +535,15 @@ server <- function(input, output, session) {
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             panel.border = element_blank(),
-            panel.background = element_blank()) +
+            panel.background = element_rect(fill = "transparent"),
+            plot.background = element_rect(fill = "transparent"),
+            legend.background =  element_rect(fill = "transparent")) +
       ylab("Points") +
       xlab("Game date")
     
-    ggplotly(p ,tooltip="text")
+    ggplotly(p ,tooltip="text") %>%
+      plotly::config(displaylogo = FALSE, 
+                     modeBarButtonsToRemove = c("lasso2d", "autoScale2d", "hoverCompareCartesian"))
   })
   
   
@@ -404,25 +552,23 @@ server <- function(input, output, session) {
   output$playerOutput3 <- renderUI({
     selectInput(inputId = "playerInput3",
                 "Select a player:",
-                choices = get_player_list(player_totals1()))
+                choices = get_player_list(player_totals1())
+                )
   })
   
-  output$shotChartBtn <- renderUI({
-    HTML(
-      '<center><button id="shotChartBtnInput" class="btn btn-default action-button">Show</button></center>'
-    )
-  })
   
   output$playerName <- renderText({
     c('<center>',
+      '<h4 style = "font-weight: bold;">',
       player_name(),
+      '</h4>',
       '</center>')
   })
   
   output$player3Img <- renderText({
     c('<center>',
       '<img height="180" width="120" src="',
-      player_img(),
+      player_img3(),
       '">',
       '</center>')
   })
@@ -431,109 +577,7 @@ server <- function(input, output, session) {
     player_info()
   })
   
-  output$shortChart1 <- renderPlot({
-    shotDataf <- player_shots()
-    
-    p <- ggplot(shotDataf, aes(x=LOC_X, y=LOC_Y)) + 
-      annotation_custom(court_image(), -250, 250, -50, 420) +
-      geom_point(aes(colour = SHOT_ZONE_BASIC, shape = EVENT_TYPE)) +
-      scale_shape_manual(values=c(21, 4)) +
-      xlim(-250, 250) +
-      ylim(-50, 420) +
-      geom_rug(alpha = 0.2) +
-      coord_fixed() +
-      ggtitle('Shot Types') +
-      theme(line = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
-            legend.title = element_blank(),
-            plot.title = element_text(size = 15, lineheight = 0.9, face = "bold"))
-    
-    p
-  })
-  
-  output$shortChart2 <- renderPlot({
-    shotDataf <- player_shots()
-    
-    p <- ggplot(shotDataf, aes(x=LOC_X, y=LOC_Y)) + 
-      annotation_custom(court_image(), -250, 250, -52, 418) +
-      geom_point(aes(colour = EVENT_TYPE, alpha = 0.8), size = 3) +
-      scale_color_manual(values = c("#008000", "#FF6347")) +
-      guides(alpha = FALSE, size = FALSE) +
-      xlim(250, -250) +
-      ylim(-52, 418) +
-      geom_rug(alpha = 0.2) +
-      coord_fixed() +
-      ggtitle("Hit and Miss") +
-      theme(line = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
-            legend.title = element_blank(),
-            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))
-    
-    p
-  })
-  
-  output$shortChart3 <- renderPlot({
-    shotDataf <- player_shots()
-    
-    p <- ggplot(shotDataf, aes(x=LOC_X, y=LOC_Y)) + 
-      annotation_custom(court_image(), -250, 250, -52, 418) +
-      stat_binhex(bins = 25, colour = "gray", alpha = 0.7) +
-      scale_fill_gradientn(colours = c("yellow","orange","red")) +
-      guides(alpha = FALSE, size = FALSE) +
-      xlim(250, -250) +
-      ylim(-52, 418) +
-      geom_rug(alpha = 0.2) +
-      coord_fixed() +
-      ggtitle("Shot Density") +
-      theme(line = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
-            legend.title = element_blank(),
-            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))
-    
-      
-    p
-  })
-  
-  output$shortChart4 <- renderPlot({
-    shotDataf <- player_shots()
-    
-    shotDataS <- shotDataf[which(!shotDataf$SHOT_ZONE_BASIC=='Backcourt'), ]
-    shotS <- plyr::ddply(shotDataS, .(SHOT_ZONE_BASIC), summarize, 
-                   SHOTS_ATTEMPTED = length(SHOT_MADE_FLAG),
-                   SHOTS_MADE = sum(as.numeric(as.character(SHOT_MADE_FLAG))),
-                   MLOC_X = mean(LOC_X),
-                   MLOC_Y = mean(LOC_Y))
-    
-    shotS$SHOT_ACCURACY <- (shotS$SHOTS_MADE / shotS$SHOTS_ATTEMPTED)
-    shotS$SHOT_ACCURACY_LAB <- paste(as.character(round(100 * shotS$SHOT_ACCURACY, 1)), "%", sep="")
-    
-    p <- ggplot(shotS, aes(x=MLOC_X, y=MLOC_Y)) + 
-      annotation_custom(court_image(), -250, 250, -52, 418) +
-      geom_point(aes(colour = SHOT_ZONE_BASIC, size = SHOT_ACCURACY, alpha = 0.8), size = 8) +
-      geom_text(aes(colour = SHOT_ZONE_BASIC, label = SHOT_ACCURACY_LAB), vjust = -1.2, size = 5) +
-      guides(alpha = FALSE, size = FALSE) +
-      xlim(250, -250) +
-      ylim(-52, 418) +
-      coord_fixed() +
-      ggtitle("Shot Accuracy") +
-      theme(line = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
-            legend.title = element_blank(),
-            legend.text=element_text(size = 12),
-            plot.title = element_text(size = 17, lineheight = 1.2, face = "bold"))
-    
-    p
+  output$shortCharts <- renderPlot({
+    graphInput()
   })
 }

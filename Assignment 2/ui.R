@@ -7,14 +7,24 @@
 header <- dashboardHeader(
   title = "NBA Stats",
   dropdownMenu(
-    type = "messages",
+    type = "notifications",
+    icon = icon("link", lib = 'glyphicon'),
+    headerText = "Learn more about data at:",
     notificationItem(
-      a("stats.nba.com", href = "https://stats.nba.com/")
+      text = "stats.nba.com", 
+      href = "https://stats.nba.com/",
+      icon = icon("link", lib = 'glyphicon')
+    ),
+    notificationItem(
+      text = "Stats Glossary", 
+      href = "https://stats.nba.com/help/glossary/",
+      icon = icon("link", lib = 'glyphicon')
     )
   )
 )
 
-sidebar <- dashboardSidebar(sidebarMenu(
+sidebar <- dashboardSidebar(
+  sidebarMenu(
   menuItem(
     "General",
     tabName = "general",
@@ -49,14 +59,16 @@ body <- dashboardBody(
     ## General tab content
     tabItem(tabName = "general",
             fluidPage(
-              fluidRow( 
-                column(6,
-                       plotlyOutput("win_percentage")
-                       
+              fluidRow(
+                column(7,
+                       offset = 2,
+                       h3("Team Standings"),
+                       plotlyOutput("win_percentage") %>% withSpinner(color="#0dc5c1")
                 ),
-                column(6,
-                       title = "Player Performance",
-                       plotlyOutput("player_distribution")
+                column(7,
+                       offset = 2,
+                       h3("Players Performance"),
+                       plotlyOutput("player_distribution") %>% withSpinner(color="#0dc5c1")
                   
                 )
               )
@@ -112,9 +124,8 @@ body <- dashboardBody(
               ),
               
               fluidRow(
-                box(
-                  width = 12,
-                  div(style = 'overflow-x: scroll', plotlyOutput("teamComparePlot1")))
+                  div(plotlyOutput("teamComparePlot1") %>% 
+                        withSpinner(color="#0dc5c1"))
               )
             )
     ),
@@ -168,9 +179,8 @@ body <- dashboardBody(
               ),
               
               fluidRow(
-                box(
-                  width = 12,
-                  div(style = 'overflow-x: scroll', plotlyOutput("playerComparePlot1")))
+                  div(plotlyOutput("playerComparePlot1") %>% 
+                        withSpinner(color="#0dc5c1"))
               )
             )
     ),
@@ -179,25 +189,24 @@ body <- dashboardBody(
     tabItem(tabName = "team_stat",
             fluidPage(
               fluidRow(
-                box(
                   h2("General Team Performance"),
-                  width = 12,
-                  solidHeader = TRUE,
-                  column(3,
+                  column(3, style = "background-color:rgba(255, 255, 255, 0);",
                     selectInput(
                       inputId = "seasonInput2",
                       "Choose a season:",
                       choices = get_seasons(),
                       selected = 2018
-                    )),
-                  column(3,
-                         uiOutput("teamOutput3")),
-                  column(1,
-                         uiOutput("teamSeasonBtn"), 
-                         style="padding-top: 24px"
-                  ),
-                  column(12,div(style = 'overflow-x: scroll', plotlyOutput("general_teamPlot")))
-                )
+                      )
+                    ),
+                  
+                  column(3, style = "background-color:rgba(255, 255, 255, 0);",
+                         uiOutput("teamOutput3")
+                         ),
+                  
+                  column(12, style = "background-color:rgba(255, 255, 255, 0);",
+                         div(plotlyOutput("general_teamPlot") %>% 
+                               withSpinner(color="#0dc5c1"))
+                         )
                
               )
             )
@@ -210,7 +219,7 @@ body <- dashboardBody(
                   h2("Player Shots"),
                   width = 12,
                   solidHeader = TRUE,
-                  column(3,
+                  column(2,
                          selectInput(
                            inputId = "seasonInput4",
                            "Choose a season:",
@@ -218,33 +227,33 @@ body <- dashboardBody(
                            selected = 2018
                          )
                   ),
-                  column(3,
+                  column(2,
                          uiOutput("playerOutput3")
                   ),
-                  column(1,
-                         uiOutput("shotChartBtn"), style="padding-top: 24px"
-                  ),
-                  column(5,
-                         textOutput("playerName"),
-                         htmlOutput("player3Img"),
-                         HTML(
-                           '<center><div id="playerInfo" class="shiny-html-output"></div></center>'
+                  column(2,
+                         selectInput(
+                           inputId = "chartTypeInput1",
+                           "Choose a plot type:",
+                           choices = c("Shot Types", "Hit and Miss", "Shot Density", "Shot Accuracy"),
+                           selected = "Shot Types"
                          )
                   )
               ),
               
               fluidRow(
-                column(6,
-                       plotOutput("shortChart1")
+                column(8,
+                       style = "margin-top: 0",
+                       plotOutput("shortCharts") %>%
+                         withSpinner(color="#0dc5c1")
                 ),
-                column(6,
-                       plotOutput("shortChart2")                      
-                ),
-                column(6,
-                       plotOutput("shortChart3")
-                ),
-                column(6,
-                       plotOutput("shortChart4")                      
+                
+                column(4,
+                       style = "margin-top: -10px",
+                       htmlOutput("playerName"),
+                       htmlOutput("player3Img"),
+                       HTML(
+                         '<center><div id="playerInfo" class="shiny-html-output"></div></center>'
+                       )
                 )
             )
           )
